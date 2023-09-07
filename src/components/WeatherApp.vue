@@ -1,14 +1,53 @@
 <template>
-  <div class="container">
-    <h1>Color Changing Weather</h1>
-    <h2>Enter a zip code to get the temperature.</h2>
-    <input type="text" v-model="zipCode" placeholder="Enter zip code" />
-    <button @click="fetchTemperature">Get Temp</button>
-    <div class="temperature">
-      <p>{{ temperatureText }}</p>
+  <div class="flex flex-col min-h-screen">
+    <!-- Main Content -->
+    <div class="flex-grow flex flex-col items-center justify-center space-y-6">
+      <h1 class="text-3xl font-bold text-gray-700">Color Changing Weather</h1>
+      <h2 class="text-xl text-gray-600">
+        Enter a zip code to get the temperature.
+      </h2>
+      <div class="space-y-4 w-64">
+        <input
+          type="text"
+          v-model="zipCode"
+          placeholder="Enter zip code"
+          class="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-300 shadow-sm"
+        />
+        <button
+          @click="fetchTemperature"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition duration-200 shadow-sm"
+        >
+          Get Temp
+        </button>
+      </div>
+      <p class="text-4xl font-semibold text-gray-700">{{ temperatureText }}</p>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+      <div class="container mx-auto text-center">
+        <div class="flex justify-center items-center space-x-4">
+          <img
+            src="https://cdn.freebiesupply.com/logos/large/2x/netlify-logo-png-transparent.png"
+            alt="Netlify Logo"
+            class="h-8"
+          />
+          <img
+            src="https://raw.githubusercontent.com/ioBroker/ioBroker.openweathermap/HEAD/admin/openweathermap.png"
+            alt="OpenWeatherMap Logo"
+            class="h-8"
+          />
+          <img
+            src="https://th.bing.com/th/id/R.6fc1c04b114f92b2ea6747c9a0b57f61?rik=xXmXG%2bKcP3wJWw&pid=ImgRaw&r=0"
+            alt="Vue.js Logo"
+            class="h-8"
+          />
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
+
 <script>
 export default {
   data() {
