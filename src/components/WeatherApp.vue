@@ -65,7 +65,7 @@ export default {
   methods: {
     async fetchWeatherData() {
       if (this.zipCode.length === 5 && !isNaN(this.zipCode)) {
-        const apiKey = process.env.VUE_APP_OPENWEATHER_API_KEY;
+        const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
         const forecastWeather = await this.fetchData(
           `https://api.openweathermap.org/data/2.5/forecast?zip=${this.zipCode},us&units=imperial&appid=${apiKey}`
         );
