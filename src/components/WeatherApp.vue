@@ -1,50 +1,43 @@
 <template>
-  <div class="flex flex-col min-h-screen">
-    <!-- Main Content -->
-    <div class="flex-grow flex flex-col items-center justify-center space-y-6">
-      <h1 class="text-3xl font-bold text-gray-700">Color Changing Weather</h1>
-      <h2 class="text-xl text-gray-600">
-        Enter a zip code to get the temperature.
-      </h2>
-      <div class="space-y-4 w-64">
-        <input
-          type="text"
-          v-model="zipCode"
-          placeholder="Enter zip code"
-          class="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-300 shadow-sm"
-        />
-        <button
-          @click="fetchTemperature"
-          class="w-full bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition duration-200 shadow-sm"
-        >
-          Get Temp
-        </button>
-      </div>
-      <p class="text-4xl font-semibold text-gray-700">{{ temperatureText }}</p>
+  <div class="min-h-screen flex flex-col items-center justify-center space-y-6">
+    <h1 class="text-4xl font-bold text-gray-700">Simple Weather</h1>
+    <div class="space-y-4 w-64">
+      <input
+        type="text"
+        v-model="zipCode"
+        placeholder="Enter zip code"
+        class="w-full p-2 rounded text-center bg-white"
+      />
+      <button
+        @click="fetchWeatherData"
+        class="w-full bg-blue-500 font-bold hover:bg-blue-600 text-white p-2 rounded transition duration-200"
+      >
+        Get 5-Day Forecast
+      </button>
     </div>
+    <div v-if="weatherData">
+      <h2 class="text-3xl pb-6 font-bold text-gray-700">
+        {{ weatherData.city.name }}
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div
+          v-for="forecast in filteredForecasts"
+          :key="forecast.dt"
+          class="rounded p-4 bg-white shadow-lg"
+        >
+          <p class="text-md font-semibold">
+            {{ getDayOfTheWeek(forecast.dt) }}
+          </p>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6">
-      <div class="container mx-auto text-center">
-        <div class="flex justify-center items-center space-x-4">
-          <img
-            src="https://cdn.freebiesupply.com/logos/large/2x/netlify-logo-png-transparent.png"
-            alt="Netlify Logo"
-            class="h-8"
-          />
-          <img
-            src="https://raw.githubusercontent.com/ioBroker/ioBroker.openweathermap/HEAD/admin/openweathermap.png"
-            alt="OpenWeatherMap Logo"
-            class="h-8"
-          />
-          <img
-            src="https://th.bing.com/th/id/R.6fc1c04b114f92b2ea6747c9a0b57f61?rik=xXmXG%2bKcP3wJWw&pid=ImgRaw&r=0"
-            alt="Vue.js Logo"
-            class="h-8"
-          />
+          <div class="text-4xl">
+            {{ getWeatherEmoji(forecast.weather[0].main) }}
+          </div>
+
+          <p class="text-xl">{{ Math.round(forecast.main.temp) }}°F</p>
+          <p class="text-sm">{{ forecast.weather[0].description }}</p>
         </div>
       </div>
-    </footer>
+    </div>
   </div>
 </template>
 
@@ -52,17 +45,33 @@
 export default {
   data() {
     return {
-      apiKey: "654e2a3a4a1b9f8974467426689fded2", // Your API key
       zipCode: "",
-      temperatureText: "",
+      weatherData: null,
     };
   },
+  computed: {
+    filteredForecasts() {
+      return this.weatherData
+        ? this.weatherData.list.filter((_, index) => index % 8 === 0)
+        : [];
+    },
+  },
+  watch: {
+    weatherData: "updateBackgroundColor",
+  },
+  mounted() {
+    this.updateBackgroundColor();
+  },
   methods: {
-    async fetchTemperature() {
+    async fetchWeatherData() {
       if (this.zipCode.length === 5 && !isNaN(this.zipCode)) {
-        const weatherData = await this.fetchWeatherData(this.zipCode);
-        if (weatherData && weatherData.cod === 200) {
-          this.updateUI(weatherData);
+        const apiKey = process.env.VUE_APP_OPENWEATHER_API_KEY;
+        const forecastWeather = await this.fetchData(
+          `https://api.openweathermap.org/data/2.5/forecast?zip=${this.zipCode},us&units=imperial&appid=${apiKey}`
+        );
+
+        if (forecastWeather.cod === "200") {
+          this.weatherData = forecastWeather;
         } else {
           alert(
             "Failed to fetch weather data. Please check the zip code or try again later."
@@ -72,60 +81,63 @@ export default {
         alert("Please enter a valid zip code.");
       }
     },
-
-    async fetchWeatherData(zipCode) {
-      const url = `https://api.openweathermap.org/data/2.5/weather?zip=${zipCode},us&units=imperial&appid=${this.apiKey}`;
+    async fetchData(url) {
       const response = await fetch(url);
       const data = await response.json();
       return data;
     },
-    updateUI(weatherData) {
-      if (weatherData.main && weatherData.main.temp) {
-        const tempFahrenheit = Math.round(weatherData.main.temp);
-        this.temperatureText = `${tempFahrenheit}°F`;
+    getDayOfTheWeek(timestamp) {
+      const days = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const date = new Date(timestamp * 1000);
+      return days[date.getDay()];
+    },
 
+    getWeatherEmoji(weatherCondition) {
+      const weatherEmojiMap = {
+        Clear: "☀️",
+        Clouds: "☁️",
+        Rain: "🌧️",
+        Snow: "❄️",
+        Thunderstorm: "⚡",
+        Drizzle: "🌦️",
+        Mist: "🌫️",
+        Fog: "🌫️",
+        Haze: "🌫️",
+        Smoke: "💨",
+        Dust: "💨",
+        Sand: "💨",
+        Ash: "💨",
+        Squall: "💨",
+        Tornado: "🌪️",
+      };
+
+      return weatherEmojiMap[weatherCondition] || "❓";
+    },
+
+    updateBackgroundColor() {
+      if (this.weatherData) {
+        const tempFahrenheit = this.weatherData.list[0].main.temp;
         if (tempFahrenheit < 60) {
-          document.body.style.backgroundColor = "lightblue";
+          document.body.style.backgroundColor = "#add8e6";
         } else if (tempFahrenheit >= 60 && tempFahrenheit < 80) {
-          document.body.style.backgroundColor = "orange";
+          document.body.style.backgroundColor = "#ffcc00";
         } else {
-          document.body.style.backgroundColor = "red";
+          document.body.style.backgroundColor = "#ff4500";
         }
-      } else {
-        alert("Failed to fetch temperature data.");
       }
     },
   },
 };
 </script>
+
 <style scoped>
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  font-family: Arial, sans-serif;
-  transition: background-color 0.5s;
-}
-
-.container {
-  text-align: center;
-}
-
-.temperature {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-top: 20px;
-}
-
-input {
-  padding: 5px 10px;
-  font-size: 1rem;
-}
-
-button {
-  padding: 6px 12px;
-  font-size: 1rem;
-  cursor: pointer;
-}
+/* Custom styles if needed */
 </style>
